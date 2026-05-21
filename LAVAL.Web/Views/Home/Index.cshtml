@@ -225,6 +225,64 @@
                 return false;
             }
 
+            function decodeURIComponentSafe(value) {
+                try {
+                    return decodeURIComponent(value);
+                } catch {
+                    return value;
+                }
+            }
+
+            function decodeRepeated(value) {
+                let out = value || "";
+                for (let i = 0; i < 2; i++) {
+                    const decoded = decodeURIComponentSafe(out);
+                    if (decoded === out) break;
+                    out = decoded;
+                }
+                return out;
+            }
+
+            function fixWhatsAppLinks() {
+                const candidates = document.querySelectorAll(
+                    "a[href*='wa.me'], a[href*='whatsapp'], [onclick*='wa.me'], [onclick*='whatsapp']"
+                );
+
+                candidates.forEach((el) => {
+                    if (el.hasAttribute("onclick")) {
+                        const onclickValue = el.getAttribute("onclick");
+                        const fixedOnclick = fixMojibake(onclickValue);
+                        if (fixedOnclick !== onclickValue) {
+                            el.setAttribute("onclick", fixedOnclick);
+                        }
+                    }
+
+                    if (!el.hasAttribute("href")) return;
+                    const href = el.getAttribute("href");
+                    if (!href) return;
+
+                    let url;
+                    try {
+                        url = new URL(href, window.location.origin);
+                    } catch {
+                        return;
+                    }
+
+                    const host = (url.hostname || "").toLowerCase();
+                    if (!host.includes("wa.me") && !host.includes("whatsapp.com")) return;
+
+                    const textParam = url.searchParams.get("text");
+                    if (!textParam) return;
+
+                    const decoded = decodeRepeated(textParam);
+                    const fixed = fixMojibake(decoded);
+                    if (fixed !== decoded) {
+                        url.searchParams.set("text", fixed);
+                        el.setAttribute("href", url.toString());
+                    }
+                });
+            }
+
             function replaceHeaderLogo() {
                 const logoPath = "/images/logo/laval-menu-logo.png";
                 const header = document.querySelector("header");
@@ -265,11 +323,13 @@
 
             function boot() {
                 fixRenderedTexts();
+                fixWhatsAppLinks();
                 removeTrustSection();
                 replaceHeaderLogo();
 
                 const observer = new MutationObserver(() => {
                     fixRenderedTexts();
+                    fixWhatsAppLinks();
                     removeTrustSection();
                     replaceHeaderLogo();
                 });
