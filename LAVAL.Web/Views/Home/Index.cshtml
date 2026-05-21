@@ -47,42 +47,6 @@
             position: relative;
         }
 
-        header a,
-        header nav a,
-        header button,
-        header span,
-        header p,
-        header div {
-            font-size: 1.34rem !important;
-            letter-spacing: 0.02em;
-        }
-
-        header nav ul,
-        header [role="navigation"] ul,
-        header nav [class*="menu"] {
-            display: flex !important;
-            align-items: center !important;
-            gap: 2.3rem !important;
-        }
-
-        header nav li,
-        header [role="navigation"] li {
-            margin: 0 !important;
-        }
-
-        header nav a,
-        header [role="navigation"] a {
-            padding-inline: 0.1rem !important;
-            font-weight: 700 !important;
-            white-space: nowrap;
-        }
-
-        header [class*="phone"],
-        header [class*="contact"] {
-            font-size: 1.08rem !important;
-            padding: 0.52rem 1.05rem !important;
-        }
-
         header img,
         header svg {
             transform: scale(1.1);
@@ -110,21 +74,70 @@
         }
 
         .laval-phone-link {
+            position: static !important;
+            right: auto !important;
+            top: auto !important;
+            transform: none !important;
+            margin: 0 !important;
+            z-index: auto;
+        }
+
+        @@media (max-width: 991px) {
+            .laval-brand-link {
+                position: static !important;
+                left: auto !important;
+                top: auto !important;
+                transform: none !important;
+                width: auto !important;
+            }
+        }
+
+        @@media (min-width: 992px) {
+            header a,
+            header nav a,
+            header button,
+            header span,
+            header p,
+            header div {
+                font-size: 1.34rem !important;
+                letter-spacing: 0.02em;
+            }
+
+            header nav ul,
+            header [role="navigation"] ul,
+            header nav [class*="menu"] {
+                display: flex !important;
+                align-items: center !important;
+                gap: 2.3rem !important;
+            }
+
+            header nav li,
+            header [role="navigation"] li {
+                margin: 0 !important;
+            }
+
+            header nav a,
+            header [role="navigation"] a {
+                padding-inline: 0.1rem !important;
+                font-weight: 700 !important;
+                white-space: nowrap;
+            }
+
+            header [class*="phone"],
+            header [class*="contact"] {
+                font-size: 1.08rem !important;
+                padding: 0.52rem 1.05rem !important;
+            }
+
+            .laval-phone-link {
             position: absolute !important;
             right: clamp(12px, 2vw, 28px) !important;
             top: 50% !important;
             transform: translateY(-50%) !important;
             margin: 0 !important;
             z-index: 7;
-        }
+            }
 
-        header nav,
-        header [role="navigation"] {
-            position: relative;
-            z-index: 6;
-        }
-
-        @@media (min-width: 992px) {
             header nav,
             header [role="navigation"] {
                 position: absolute !important;
