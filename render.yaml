@@ -1,0 +1,6 @@
+services:
+  - type: web
+    name: laval-web
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    plan: free

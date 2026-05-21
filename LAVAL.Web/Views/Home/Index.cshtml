@@ -1,0 +1,271 @@
+@{
+    Layout = null;
+}
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Hostinger Horizons</title>
+    <script type="module" crossorigin src="/assets/index-XPr3v4GB.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-RfTrZ14n.css">
+    <style>
+        @@font-face {
+            font-family: "Barlow Condensed";
+            src: url("/fonts/BarlowCondensed-Regular.ttf") format("truetype");
+            font-weight: 400;
+            font-style: normal;
+            font-display: swap;
+        }
+
+        @@font-face {
+            font-family: "Barlow Condensed";
+            src: url("/fonts/BarlowCondensed-SemiBold.ttf") format("truetype");
+            font-weight: 600;
+            font-style: normal;
+            font-display: swap;
+        }
+
+        @@font-face {
+            font-family: "Barlow Condensed";
+            src: url("/fonts/BarlowCondensed-Bold.ttf") format("truetype");
+            font-weight: 700;
+            font-style: normal;
+            font-display: swap;
+        }
+
+        html,
+        body,
+        #root,
+        #root * {
+            font-family: "Barlow Condensed", "Arial Narrow", Arial, sans-serif !important;
+        }
+
+        header {
+            min-height: 98px !important;
+            position: relative;
+        }
+
+        header a,
+        header nav a,
+        header button,
+        header span,
+        header p,
+        header div {
+            font-size: 1.34rem !important;
+            letter-spacing: 0.02em;
+        }
+
+        header nav ul,
+        header [role="navigation"] ul,
+        header nav [class*="menu"] {
+            display: flex !important;
+            align-items: center !important;
+            gap: 2.3rem !important;
+        }
+
+        header nav li,
+        header [role="navigation"] li {
+            margin: 0 !important;
+        }
+
+        header nav a,
+        header [role="navigation"] a {
+            padding-inline: 0.1rem !important;
+            font-weight: 700 !important;
+            white-space: nowrap;
+        }
+
+        header [class*="phone"],
+        header [class*="contact"] {
+            font-size: 1.08rem !important;
+            padding: 0.52rem 1.05rem !important;
+        }
+
+        header img,
+        header svg {
+            transform: scale(1.1);
+            transform-origin: left center;
+        }
+
+        .laval-brand-link {
+            position: absolute !important;
+            left: clamp(12px, 2vw, 28px);
+            top: 50%;
+            transform: translateY(-50%);
+            display: inline-flex !important;
+            align-items: center;
+            width: clamp(170px, 16vw, 240px);
+            z-index: 4;
+        }
+
+        .laval-custom-logo {
+            width: 100% !important;
+            height: auto !important;
+            max-width: 100% !important;
+            max-height: 78px !important;
+            object-fit: contain;
+            transform: none !important;
+        }
+
+        .laval-phone-link {
+            position: absolute !important;
+            right: clamp(12px, 2vw, 28px) !important;
+            top: 50% !important;
+            transform: translateY(-50%) !important;
+            margin: 0 !important;
+            z-index: 7;
+        }
+
+        header nav,
+        header [role="navigation"] {
+            position: relative;
+            z-index: 6;
+        }
+
+        @@media (min-width: 992px) {
+            header nav,
+            header [role="navigation"] {
+                position: absolute !important;
+                left: 50% !important;
+                top: 50% !important;
+                transform: translate(-50%, -50%) !important;
+                width: max-content !important;
+                z-index: 7;
+            }
+
+            header nav ul,
+            header [role="navigation"] ul,
+            header nav [class*="menu"] {
+                justify-content: center !important;
+                padding-left: 0 !important;
+            }
+
+        }
+
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+    <script>
+        (function () {
+            const FIX_MAP = new Map([
+                ["Ã¡", "á"], ["Ã©", "é"], ["Ã­", "í"], ["Ã³", "ó"], ["Ãº", "ú"],
+                ["Ã", "Á"], ["Ã‰", "É"], ["Ã", "Í"], ["Ã“", "Ó"], ["Ãš", "Ú"],
+                ["Ã±", "ñ"], ["Ã‘", "Ñ"], ["Ã¼", "ü"], ["Ãœ", "Ü"],
+                ["Â¿", "¿"], ["Â¡", "¡"], ["â", "\""], ["â", "\""], ["â", "'"],
+                ["â", "–"], ["â", "—"], ["Â°", "°"], ["Â", ""]
+            ]);
+
+            function fixMojibake(value) {
+                if (!value) return value;
+                let out = value;
+                for (const [bad, good] of FIX_MAP.entries()) {
+                    out = out.split(bad).join(good);
+                }
+                return out;
+            }
+
+            function fixRenderedTexts() {
+                const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+                while (walker.nextNode()) {
+                    const node = walker.currentNode;
+                    if (!node || !node.nodeValue) continue;
+                    const fixed = fixMojibake(node.nodeValue);
+                    if (fixed !== node.nodeValue) node.nodeValue = fixed;
+                }
+
+                const attrs = ["title", "placeholder", "aria-label"];
+                const attrCandidates = document.querySelectorAll("[title], [placeholder], [aria-label]");
+                attrCandidates.forEach((el) => {
+                    attrs.forEach((attr) => {
+                        if (!el.hasAttribute(attr)) return;
+                        const current = el.getAttribute(attr);
+                        const fixed = fixMojibake(current);
+                        if (fixed !== current) el.setAttribute(attr, fixed);
+                    });
+                });
+            }
+
+            function normalizeText(value) {
+                return fixMojibake(value || "")
+                    .toLowerCase()
+                    .normalize("NFD")
+                    .replace(/[\u0300-\u036f]/g, "")
+                    .replace(/\s+/g, " ")
+                    .trim();
+            }
+
+            function removeTrustSection() {
+                const headings = document.querySelectorAll("h1, h2, h3, h4, h5, h6");
+                for (const heading of headings) {
+                    const text = normalizeText(heading.textContent);
+                    if (!text.includes("conf") || !text.includes("nosotros")) continue;
+
+                    const block = heading.closest("section") || heading.closest("article") || heading.closest("div");
+                    if (!block) continue;
+
+                    block.remove();
+                    return true;
+                }
+                return false;
+            }
+
+            function replaceHeaderLogo() {
+                const logoPath = "/images/logo/laval-menu-logo.png";
+                const header = document.querySelector("header");
+                if (!header) return false;
+
+                const brandCandidates = Array.from(header.querySelectorAll("a"))
+                    .filter((a) => !a.closest("nav"))
+                    .filter((a) => !/\d{2,}/.test(a.textContent || ""));
+
+                if (brandCandidates.length === 0) return false;
+
+                const brandLink = brandCandidates.sort((a, b) =>
+                    a.getBoundingClientRect().left - b.getBoundingClientRect().left
+                )[0];
+
+                let logoImg = brandLink.querySelector("img.laval-custom-logo");
+                if (!logoImg) {
+                    brandLink.innerHTML = "";
+                    logoImg = document.createElement("img");
+                    brandLink.appendChild(logoImg);
+                }
+
+                logoImg.src = logoPath;
+                logoImg.alt = "Laval Servicios";
+                logoImg.className = "laval-custom-logo";
+                brandLink.classList.add("laval-brand-link");
+                brandLink.style.minWidth = "0";
+
+                const phoneCandidates = Array.from(header.querySelectorAll("a, button"))
+                    .filter((el) => /\d{3,}/.test(el.textContent || ""))
+                    .filter((el) => !el.querySelector("img"));
+
+                if (phoneCandidates.length > 0) {
+                    phoneCandidates[0].classList.add("laval-phone-link");
+                }
+                return true;
+            }
+
+            function boot() {
+                fixRenderedTexts();
+                removeTrustSection();
+                replaceHeaderLogo();
+
+                const observer = new MutationObserver(() => {
+                    fixRenderedTexts();
+                    removeTrustSection();
+                    replaceHeaderLogo();
+                });
+
+                observer.observe(document.body, { childList: true, subtree: true });
+            }
+
+            document.addEventListener("DOMContentLoaded", boot);
+        })();
+    </script>
+</body>
+</html>
