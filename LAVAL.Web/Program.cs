@@ -1,9 +1,11 @@
 using Microsoft.AspNetCore.HttpOverrides;
+using LAVAL.Web.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
+builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection(EmailSettings.SectionName));
 
 var app = builder.Build();
 

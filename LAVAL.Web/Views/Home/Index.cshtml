@@ -283,6 +283,85 @@
                 });
             }
 
+            function getFieldValueByHints(form, selector, hints) {
+                const fields = Array.from(form.querySelectorAll(selector));
+                for (const field of fields) {
+                    const identity = normalizeText(
+                        [
+                            field.getAttribute("name"),
+                            field.getAttribute("id"),
+                            field.getAttribute("placeholder"),
+                            field.getAttribute("aria-label"),
+                            field.closest("label")?.textContent
+                        ]
+                            .filter(Boolean)
+                            .join(" ")
+                    );
+
+                    if (hints.some((hint) => identity.includes(hint))) {
+                        return (field.value || "").trim();
+                    }
+                }
+
+                return "";
+            }
+
+            function wireContactFormSubmission() {
+                const forms = Array.from(document.querySelectorAll("form"));
+                for (const form of forms) {
+                    if (form.dataset.lavalMailBound === "1") continue;
+
+                    const submit = form.querySelector("button[type='submit'], input[type='submit']");
+                    const hasTextarea = !!form.querySelector("textarea");
+                    const buttonText = normalizeText((submit?.textContent || submit?.value || ""));
+                    if (!hasTextarea || !submit || (!buttonText.includes("consulta") && !buttonText.includes("enviar"))) {
+                        continue;
+                    }
+
+                    form.dataset.lavalMailBound = "1";
+                    form.addEventListener("submit", async (event) => {
+                        event.preventDefault();
+
+                        const payload = {
+                            fullName: getFieldValueByHints(form, "input", ["nombre", "name"]),
+                            phone: getFieldValueByHints(form, "input", ["telefono", "whatsapp", "tel"]),
+                            email: getFieldValueByHints(form, "input", ["correo", "email", "mail"]),
+                            message: getFieldValueByHints(form, "textarea, input", ["mensaje", "consulta"])
+                        };
+
+                        if (!payload.fullName || !payload.phone || !payload.email || !payload.message) {
+                            alert("Completá todos los campos obligatorios.");
+                            return;
+                        }
+
+                        const originalText = submit.textContent || submit.value || "";
+                        if ("disabled" in submit) submit.disabled = true;
+                        if ("textContent" in submit) submit.textContent = "Enviando...";
+
+                        try {
+                            const response = await fetch("/api/contact/send", {
+                                method: "POST",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify(payload)
+                            });
+
+                            const result = await response.json().catch(() => ({}));
+                            if (!response.ok || !result.success) {
+                                throw new Error(result.message || "No pudimos enviar tu consulta en este momento.");
+                            }
+
+                            form.reset();
+                            alert("Gracias. Tu consulta fue enviada correctamente.");
+                        } catch (error) {
+                            alert(error.message || "No pudimos enviar tu consulta en este momento.");
+                        } finally {
+                            if ("disabled" in submit) submit.disabled = false;
+                            if ("textContent" in submit) submit.textContent = originalText;
+                        }
+                    });
+                }
+            }
+
             function replaceHeaderLogo() {
                 const logoPath = "/images/logo/laval-menu-logo.png";
                 const header = document.querySelector("header");
@@ -324,12 +403,14 @@
             function boot() {
                 fixRenderedTexts();
                 fixWhatsAppLinks();
+                wireContactFormSubmission();
                 removeTrustSection();
                 replaceHeaderLogo();
 
                 const observer = new MutationObserver(() => {
                     fixRenderedTexts();
                     fixWhatsAppLinks();
+                    wireContactFormSubmission();
                     removeTrustSection();
                     replaceHeaderLogo();
                 });
