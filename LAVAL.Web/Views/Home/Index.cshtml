@@ -352,7 +352,7 @@
                         }))
                         .filter((item) => item.value);
 
-                    const emailItem = ordered.find((item) => item.type === "email" || item.value.includes("@"));
+                    const emailItem = ordered.find((item) => item.type === "email" || item.value.includes("@@"));
                     const phoneItem = ordered.find((item) =>
                         item.type === "tel" || (item !== emailItem && /\d{6,}/.test(item.value))
                     );
