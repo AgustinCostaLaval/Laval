@@ -283,21 +283,36 @@
                 });
             }
 
+            function getFieldIdentity(field) {
+                const labelFor = field.id
+                    ? document.querySelector(`label[for="${CSS.escape(field.id)}"]`)?.textContent
+                    : "";
+                const wrapper = field.closest("div");
+                const nearby = wrapper
+                    ? Array.from(wrapper.querySelectorAll("label, p, span"))
+                          .map((el) => el.textContent)
+                          .join(" ")
+                    : "";
+
+                return normalizeText(
+                    [
+                        field.getAttribute("name"),
+                        field.getAttribute("id"),
+                        field.getAttribute("placeholder"),
+                        field.getAttribute("aria-label"),
+                        field.closest("label")?.textContent,
+                        labelFor,
+                        nearby
+                    ]
+                        .filter(Boolean)
+                        .join(" ")
+                );
+            }
+
             function getFieldValueByHints(form, selector, hints) {
                 const fields = Array.from(form.querySelectorAll(selector));
                 for (const field of fields) {
-                    const identity = normalizeText(
-                        [
-                            field.getAttribute("name"),
-                            field.getAttribute("id"),
-                            field.getAttribute("placeholder"),
-                            field.getAttribute("aria-label"),
-                            field.closest("label")?.textContent
-                        ]
-                            .filter(Boolean)
-                            .join(" ")
-                    );
-
+                    const identity = getFieldIdentity(field);
                     if (hints.some((hint) => identity.includes(hint))) {
                         return (field.value || "").trim();
                     }
@@ -306,12 +321,73 @@
                 return "";
             }
 
+            function extractContactPayload(form) {
+                const textarea = form.querySelector("textarea");
+                const inputs = Array.from(form.querySelectorAll("input")).filter((field) => {
+                    const type = (field.getAttribute("type") || "text").toLowerCase();
+                    return !["hidden", "submit", "button", "checkbox", "radio", "file"].includes(type);
+                });
+
+                let fullName = getFieldValueByHints(form, "input", ["nombre", "name"]);
+                let phone = getFieldValueByHints(form, "input", ["telefono", "whatsapp", "tel"]);
+                let email = getFieldValueByHints(form, "input", ["correo", "email", "mail"]);
+                let message = getFieldValueByHints(form, "textarea", ["mensaje", "consulta"]);
+
+                const emailInput = form.querySelector('input[type="email"]');
+                const phoneInput = form.querySelector('input[type="tel"]');
+
+                if (!email && emailInput) email = (emailInput.value || "").trim();
+                if (!phone && phoneInput) phone = (phoneInput.value || "").trim();
+
+                if ((!fullName || !phone || !email) && inputs.length >= 3) {
+                    const textInputs = inputs.filter((field) => {
+                        const type = (field.getAttribute("type") || "text").toLowerCase();
+                        return type !== "email" && type !== "tel";
+                    });
+
+                    if (!fullName && textInputs[0]) fullName = (textInputs[0].value || "").trim();
+                    if (!phone && textInputs[1]) phone = (textInputs[1].value || "").trim();
+                    if (!email && textInputs[2]) email = (textInputs[2].value || "").trim();
+                }
+
+                if (!message && textarea) message = (textarea.value || "").trim();
+
+                return { fullName, phone, email, message };
+            }
+
+            async function sendContactPayload(form, submit, payload) {
+                const originalText = submit.textContent || submit.value || "";
+                if ("disabled" in submit) submit.disabled = true;
+                if ("textContent" in submit) submit.textContent = "Enviando...";
+
+                try {
+                    const response = await fetch("/api/contact/send", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(payload)
+                    });
+
+                    const result = await response.json().catch(() => ({}));
+                    if (!response.ok || !result.success) {
+                        throw new Error(result.message || "No pudimos enviar tu consulta en este momento.");
+                    }
+
+                    form.reset();
+                    alert("Gracias. Tu consulta fue enviada correctamente.");
+                } catch (error) {
+                    alert(error.message || "No pudimos enviar tu consulta en este momento.");
+                } finally {
+                    if ("disabled" in submit) submit.disabled = false;
+                    if ("textContent" in submit) submit.textContent = originalText;
+                }
+            }
+
             function wireContactFormSubmission() {
                 const forms = Array.from(document.querySelectorAll("form"));
                 for (const form of forms) {
                     if (form.dataset.lavalMailBound === "1") continue;
 
-                    const submit = form.querySelector("button[type='submit'], input[type='submit']");
+                    const submit = form.querySelector("button[type='submit'], input[type='submit'], button");
                     const hasTextarea = !!form.querySelector("textarea");
                     const buttonText = normalizeText((submit?.textContent || submit?.value || ""));
                     if (!hasTextarea || !submit || (!buttonText.includes("consulta") && !buttonText.includes("enviar"))) {
@@ -319,46 +395,30 @@
                     }
 
                     form.dataset.lavalMailBound = "1";
-                    form.addEventListener("submit", async (event) => {
+
+                    let sending = false;
+                    const handleSend = async (event) => {
                         event.preventDefault();
+                        event.stopPropagation();
+                        event.stopImmediatePropagation();
+                        if (sending) return;
 
-                        const payload = {
-                            fullName: getFieldValueByHints(form, "input", ["nombre", "name"]),
-                            phone: getFieldValueByHints(form, "input", ["telefono", "whatsapp", "tel"]),
-                            email: getFieldValueByHints(form, "input", ["correo", "email", "mail"]),
-                            message: getFieldValueByHints(form, "textarea, input", ["mensaje", "consulta"])
-                        };
-
+                        const payload = extractContactPayload(form);
                         if (!payload.fullName || !payload.phone || !payload.email || !payload.message) {
                             alert("Completá todos los campos obligatorios.");
                             return;
                         }
 
-                        const originalText = submit.textContent || submit.value || "";
-                        if ("disabled" in submit) submit.disabled = true;
-                        if ("textContent" in submit) submit.textContent = "Enviando...";
-
+                        sending = true;
                         try {
-                            const response = await fetch("/api/contact/send", {
-                                method: "POST",
-                                headers: { "Content-Type": "application/json" },
-                                body: JSON.stringify(payload)
-                            });
-
-                            const result = await response.json().catch(() => ({}));
-                            if (!response.ok || !result.success) {
-                                throw new Error(result.message || "No pudimos enviar tu consulta en este momento.");
-                            }
-
-                            form.reset();
-                            alert("Gracias. Tu consulta fue enviada correctamente.");
-                        } catch (error) {
-                            alert(error.message || "No pudimos enviar tu consulta en este momento.");
+                            await sendContactPayload(form, submit, payload);
                         } finally {
-                            if ("disabled" in submit) submit.disabled = false;
-                            if ("textContent" in submit) submit.textContent = originalText;
+                            sending = false;
                         }
-                    });
+                    };
+
+                    form.addEventListener("submit", handleSend, true);
+                    submit.addEventListener("click", handleSend, true);
                 }
             }
 
