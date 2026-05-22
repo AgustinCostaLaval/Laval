@@ -314,45 +314,81 @@
                 for (const field of fields) {
                     const identity = getFieldIdentity(field);
                     if (hints.some((hint) => identity.includes(hint))) {
-                        return (field.value || "").trim();
+                        return readFieldValue(field);
                     }
                 }
 
                 return "";
             }
 
-            function extractContactPayload(form) {
-                const textarea = form.querySelector("textarea");
-                const inputs = Array.from(form.querySelectorAll("input")).filter((field) => {
+            function readFieldValue(field) {
+                return (field.value || field.getAttribute("value") || "").trim();
+            }
+
+            function extractContactPayload(container) {
+                const textarea = container.querySelector("textarea");
+                const inputs = Array.from(container.querySelectorAll("input")).filter((field) => {
                     const type = (field.getAttribute("type") || "text").toLowerCase();
                     return !["hidden", "submit", "button", "checkbox", "radio", "file"].includes(type);
                 });
 
-                let fullName = getFieldValueByHints(form, "input", ["nombre", "name"]);
-                let phone = getFieldValueByHints(form, "input", ["telefono", "whatsapp", "tel"]);
-                let email = getFieldValueByHints(form, "input", ["correo", "email", "mail"]);
-                let message = getFieldValueByHints(form, "textarea", ["mensaje", "consulta"]);
+                let fullName = getFieldValueByHints(container, "input", ["nombre", "name"]);
+                let phone = getFieldValueByHints(container, "input", ["telefono", "whatsapp", "tel"]);
+                let email = getFieldValueByHints(container, "input", ["correo", "email", "mail"]);
+                let message = getFieldValueByHints(container, "textarea", ["mensaje", "consulta"]);
 
-                const emailInput = form.querySelector('input[type="email"]');
-                const phoneInput = form.querySelector('input[type="tel"]');
+                const emailInput = container.querySelector('input[type="email"]');
+                const phoneInput = container.querySelector('input[type="tel"]');
 
-                if (!email && emailInput) email = (emailInput.value || "").trim();
-                if (!phone && phoneInput) phone = (phoneInput.value || "").trim();
+                if (!email && emailInput) email = readFieldValue(emailInput);
+                if (!phone && phoneInput) phone = readFieldValue(phoneInput);
 
                 if ((!fullName || !phone || !email) && inputs.length >= 3) {
-                    const textInputs = inputs.filter((field) => {
-                        const type = (field.getAttribute("type") || "text").toLowerCase();
-                        return type !== "email" && type !== "tel";
-                    });
+                    const ordered = inputs
+                        .map((field) => ({
+                            field,
+                            type: (field.getAttribute("type") || "text").toLowerCase(),
+                            value: readFieldValue(field)
+                        }))
+                        .filter((item) => item.value);
 
-                    if (!fullName && textInputs[0]) fullName = (textInputs[0].value || "").trim();
-                    if (!phone && textInputs[1]) phone = (textInputs[1].value || "").trim();
-                    if (!email && textInputs[2]) email = (textInputs[2].value || "").trim();
+                    const emailItem = ordered.find((item) => item.type === "email" || item.value.includes("@"));
+                    const phoneItem = ordered.find((item) =>
+                        item.type === "tel" || (item !== emailItem && /\d{6,}/.test(item.value))
+                    );
+                    const nameItem = ordered.find((item) => item !== emailItem && item !== phoneItem);
+
+                    if (!fullName && nameItem) fullName = nameItem.value;
+                    if (!phone && phoneItem) phone = phoneItem.value;
+                    if (!email && emailItem) email = emailItem.value;
+
+                    if (!fullName && ordered[0]) fullName = ordered[0].value;
+                    if (!phone && ordered[1]) phone = ordered[1].value;
+                    if (!email && ordered[2]) email = ordered[2].value;
                 }
 
-                if (!message && textarea) message = (textarea.value || "").trim();
+                if (!message && textarea) message = readFieldValue(textarea);
 
                 return { fullName, phone, email, message };
+            }
+
+            function findContactSubmitButton() {
+                return Array.from(document.querySelectorAll("button, input[type='submit']")).find((btn) => {
+                    const text = normalizeText(btn.textContent || btn.value || "");
+                    return text.includes("enviar") && text.includes("consulta");
+                });
+            }
+
+            function findContactContainer(submitButton) {
+                let node = submitButton.parentElement;
+                while (node && node !== document.body) {
+                    const textarea = node.querySelector("textarea");
+                    const inputs = node.querySelectorAll("input");
+                    if (textarea && inputs.length >= 2) return node;
+                    node = node.parentElement;
+                }
+
+                return submitButton.closest("form") || submitButton.parentElement;
             }
 
             async function sendContactPayload(form, submit, payload) {
@@ -382,43 +418,56 @@
                 }
             }
 
+            function bindContactSend(container, submit) {
+                if (!container || !submit || submit.dataset.lavalMailBound === "1") return false;
+
+                submit.dataset.lavalMailBound = "1";
+                let sending = false;
+
+                const handleSend = async (event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    event.stopImmediatePropagation();
+                    if (sending) return;
+
+                    const payload = extractContactPayload(container);
+                    if (!payload.fullName || !payload.phone || !payload.email || !payload.message) {
+                        alert("Completá todos los campos obligatorios.");
+                        return;
+                    }
+
+                    sending = true;
+                    try {
+                        const formLike = container.closest("form") || container;
+                        await sendContactPayload(formLike, submit, payload);
+                    } finally {
+                        sending = false;
+                    }
+                };
+
+                submit.addEventListener("click", handleSend, true);
+                const form = container.closest("form");
+                if (form) form.addEventListener("submit", handleSend, true);
+                return true;
+            }
+
             function wireContactFormSubmission() {
+                const submit = findContactSubmitButton();
+                if (submit) {
+                    const container = findContactContainer(submit);
+                    if (bindContactSend(container, submit)) return;
+                }
+
                 const forms = Array.from(document.querySelectorAll("form"));
                 for (const form of forms) {
-                    if (form.dataset.lavalMailBound === "1") continue;
-
-                    const submit = form.querySelector("button[type='submit'], input[type='submit'], button");
+                    const formSubmit = form.querySelector("button[type='submit'], input[type='submit'], button");
                     const hasTextarea = !!form.querySelector("textarea");
-                    const buttonText = normalizeText((submit?.textContent || submit?.value || ""));
-                    if (!hasTextarea || !submit || (!buttonText.includes("consulta") && !buttonText.includes("enviar"))) {
+                    const buttonText = normalizeText((formSubmit?.textContent || formSubmit?.value || ""));
+                    if (!hasTextarea || !formSubmit || (!buttonText.includes("consulta") && !buttonText.includes("enviar"))) {
                         continue;
                     }
 
-                    form.dataset.lavalMailBound = "1";
-
-                    let sending = false;
-                    const handleSend = async (event) => {
-                        event.preventDefault();
-                        event.stopPropagation();
-                        event.stopImmediatePropagation();
-                        if (sending) return;
-
-                        const payload = extractContactPayload(form);
-                        if (!payload.fullName || !payload.phone || !payload.email || !payload.message) {
-                            alert("Completá todos los campos obligatorios.");
-                            return;
-                        }
-
-                        sending = true;
-                        try {
-                            await sendContactPayload(form, submit, payload);
-                        } finally {
-                            sending = false;
-                        }
-                    };
-
-                    form.addEventListener("submit", handleSend, true);
-                    submit.addEventListener("click", handleSend, true);
+                    bindContactSend(form, formSubmit);
                 }
             }
 
