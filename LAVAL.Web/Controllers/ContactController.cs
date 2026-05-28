@@ -22,12 +22,22 @@ public class ContactController : ControllerBase
     [HttpPost("send")]
     public async Task<IActionResult> Send([FromBody] ContactRequest request)
     {
+        request.FullName = request.FullName?.Trim() ?? string.Empty;
+        request.Phone = request.Phone?.Trim() ?? string.Empty;
+        request.Email = request.Email?.Trim() ?? string.Empty;
+        request.Message = request.Message?.Trim() ?? string.Empty;
+
         if (string.IsNullOrWhiteSpace(request.FullName) ||
             string.IsNullOrWhiteSpace(request.Phone) ||
             string.IsNullOrWhiteSpace(request.Email) ||
             string.IsNullOrWhiteSpace(request.Message))
         {
             return BadRequest(new { success = false, message = "Completá todos los campos obligatorios." });
+        }
+
+        if (!TryCreateMailAddress(request.Email, out var replyToAddress))
+        {
+            return BadRequest(new { success = false, message = "Ingresá un email válido." });
         }
 
         if (string.IsNullOrWhiteSpace(_emailSettings.Password))
@@ -62,7 +72,7 @@ public class ContactController : ControllerBase
             };
 
             mail.To.Add(_emailSettings.To);
-            mail.ReplyToList.Add(new MailAddress(request.Email));
+            mail.ReplyToList.Add(replyToAddress!);
 
             using var smtp = new SmtpClient(_emailSettings.Host, _emailSettings.Port)
             {
@@ -78,6 +88,20 @@ public class ContactController : ControllerBase
         {
             _logger.LogError(ex, "Failed to send contact email.");
             return StatusCode(500, new { success = false, message = "No pudimos enviar tu consulta en este momento." });
+        }
+    }
+
+    private static bool TryCreateMailAddress(string value, out MailAddress? address)
+    {
+        try
+        {
+            address = new MailAddress(value);
+            return true;
+        }
+        catch
+        {
+            address = null;
+            return false;
         }
     }
 }

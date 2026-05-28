@@ -325,6 +325,12 @@
                 return (field.value || field.getAttribute("value") || "").trim();
             }
 
+            function isLikelyEmail(value) {
+                const normalized = (value || "").trim();
+                const atSign = String.fromCharCode(64);
+                return normalized.includes(atSign) && normalized.includes(".");
+            }
+
             function extractContactPayload(container) {
                 const textarea = container.querySelector("textarea");
                 const inputs = Array.from(container.querySelectorAll("input")).filter((field) => {
@@ -352,7 +358,7 @@
                         }))
                         .filter((item) => item.value);
 
-                    const emailItem = ordered.find((item) => item.type === "email" || item.value.includes("@@"));
+                    const emailItem = ordered.find((item) => item.type === "email" || isLikelyEmail(item.value));
                     const phoneItem = ordered.find((item) =>
                         item.type === "tel" || (item !== emailItem && /\d{6,}/.test(item.value))
                     );
@@ -433,6 +439,10 @@
                     const payload = extractContactPayload(container);
                     if (!payload.fullName || !payload.phone || !payload.email || !payload.message) {
                         alert("Completá todos los campos obligatorios.");
+                        return;
+                    }
+                    if (!isLikelyEmail(payload.email)) {
+                        alert("Ingresá un email válido.");
                         return;
                     }
 
