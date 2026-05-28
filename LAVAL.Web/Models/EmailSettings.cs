@@ -4,6 +4,9 @@ public class EmailSettings
 {
     public const string SectionName = "EmailSettings";
 
+    public string ResendApiKey { get; set; } = string.Empty;
+    public string ResendFrom { get; set; } = string.Empty;
+
     public string Host { get; set; } = "smtp.gmail.com";
     public int Port { get; set; } = 587;
     public bool EnableSsl { get; set; } = true;
