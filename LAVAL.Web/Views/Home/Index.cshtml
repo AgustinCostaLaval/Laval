@@ -560,45 +560,13 @@
                 }
                 return true;
             }
-function updateFooter() {
-    const logoPath = "/images/logo/laval-menu-logo.png";
 
-    // Eliminar Instagram y LinkedIn
-    document.querySelectorAll("a").forEach(link => {
-        const href = (link.getAttribute("href") || "").toLowerCase();
-
-        if (
-            href.includes("instagram.com") ||
-            href.includes("linkedin.com")
-        ) {
-            const parent = link.parentElement;
-            link.remove();
-
-            if (parent && parent.children.length === 0) {
-                parent.remove();
-            }
-        }
-    });
-
-    // Reemplazar logo verde del footer
-    document.querySelectorAll("*").forEach(el => {
-        if (el.textContent?.trim() === "L") {
-            const container = el.parentElement;
-
-            if (container && container.textContent.includes("SERVICIOS")) {
-                container.innerHTML =
-                    `<img src="${logoPath}" alt="LAVAL Servicios" style="height:60px;width:auto;">`;
-            }
-        }
-    });
-}
             function boot() {
                 fixRenderedTexts();
                 fixWhatsAppLinks();
                 wireContactFormSubmission();
                 removeTrustSection();
                 replaceHeaderLogo();
-                updateFooter();
 
                 const observer = new MutationObserver(() => {
                     fixRenderedTexts();
@@ -606,7 +574,6 @@ function updateFooter() {
                     wireContactFormSubmission();
                     removeTrustSection();
                     replaceHeaderLogo();
-                    updateFooter();
                 });
 
                 observer.observe(document.body, { childList: true, subtree: true });
