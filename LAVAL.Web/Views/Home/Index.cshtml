@@ -115,6 +115,73 @@
             transform: none !important;
         }
 
+        footer.laval-footer-tuned {
+            letter-spacing: 0.01em;
+        }
+
+        footer.laval-footer-tuned .grid > div > p,
+        footer.laval-footer-tuned .grid a,
+        footer.laval-footer-tuned .grid li,
+        footer.laval-footer-tuned .grid span,
+        footer.laval-footer-tuned .grid p {
+            font-size: 1.06rem !important;
+            line-height: 1.65 !important;
+        }
+
+        footer.laval-footer-tuned h3 {
+            font-size: 1.38rem !important;
+            margin-bottom: 1.1rem !important;
+            letter-spacing: 0.02em;
+        }
+
+        footer.laval-footer-tuned .grid > div:first-child > p {
+            font-size: 1.1rem !important;
+            max-width: 24rem;
+        }
+
+        footer.laval-footer-tuned .grid ul {
+            row-gap: 0.7rem !important;
+        }
+
+        footer.laval-footer-tuned .laval-footer-logo {
+            height: 72px !important;
+            max-width: 280px !important;
+        }
+
+        footer.laval-footer-tuned .laval-footer-brand {
+            margin-bottom: 0.35rem !important;
+        }
+
+        footer.laval-footer-tuned [class*="border-t"] {
+            padding-top: 1.5rem !important;
+        }
+
+        footer.laval-footer-tuned [class*="border-t"] p {
+            font-size: 1rem !important;
+            opacity: 0.92;
+        }
+
+        footer.laval-footer-tuned [class*="border-t"] > div:empty {
+            display: none !important;
+        }
+
+        footer.laval-footer-tuned [class*="border-t"]:has(> p:only-child),
+        footer.laval-footer-tuned [class*="border-t"]:has(> p:first-child:last-of-type) {
+            justify-content: center !important;
+            text-align: center;
+        }
+
+        @@media (max-width: 991px) {
+            footer.laval-footer-tuned .laval-footer-logo {
+                height: 64px !important;
+                max-width: 240px !important;
+            }
+
+            footer.laval-footer-tuned h3 {
+                font-size: 1.28rem !important;
+            }
+        }
+
         .laval-phone-link {
             position: static !important;
             right: auto !important;
@@ -608,12 +675,30 @@
                 return true;
             }
 
+            function polishFooterLayout(footer) {
+                footer.classList.add("laval-footer-tuned");
+
+                footer.querySelectorAll('[class*="border-t"]').forEach((bar) => {
+                    bar.querySelectorAll("div.flex.gap-6, div.flex.gap-4").forEach((group) => {
+                        if (group.querySelectorAll("a, button").length === 0) {
+                            group.remove();
+                        }
+                    });
+
+                    if (bar.querySelectorAll("a, button").length === 0) {
+                        bar.style.justifyContent = "center";
+                        bar.style.textAlign = "center";
+                    }
+                });
+            }
+
             function customizeFooter() {
                 const footer = document.querySelector("footer");
                 if (!footer) return false;
 
                 removeFooterSocialIcons(footer);
                 removeFooterLegalLinks(footer);
+                polishFooterLayout(footer);
                 return replaceFooterLogo();
             }
 
