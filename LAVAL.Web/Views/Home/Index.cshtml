@@ -101,6 +101,20 @@
             transform: none !important;
         }
 
+        .laval-footer-brand {
+            display: inline-flex !important;
+            align-items: center !important;
+            gap: 0 !important;
+        }
+
+        .laval-footer-logo {
+            height: 58px !important;
+            width: auto !important;
+            max-width: 240px !important;
+            object-fit: contain !important;
+            transform: none !important;
+        }
+
         .laval-phone-link {
             position: static !important;
             right: auto !important;
@@ -548,6 +562,54 @@
                 }
             }
 
+            function removeFooterSocialIcons(footer) {
+                footer.querySelectorAll("div.flex.gap-4").forEach((container) => {
+                    const links = Array.from(container.querySelectorAll("a"));
+                    if (links.length === 0) return;
+
+                    const iconOnlyLinks = links.filter((link) => {
+                        return link.querySelector("svg") && !normalizeText(link.textContent);
+                    });
+
+                    if (iconOnlyLinks.length === links.length) {
+                        container.remove();
+                    }
+                });
+            }
+
+            function replaceFooterLogo() {
+                const logoPath = "/images/logo/laval-menu-logo.png";
+                const footer = document.querySelector("footer");
+                if (!footer) return false;
+
+                const brandLink = Array.from(footer.querySelectorAll("a")).find((link) => {
+                    const text = normalizeText(link.textContent);
+                    return text.includes("laval") && text.includes("servicios");
+                });
+
+                if (!brandLink) return false;
+                if (brandLink.dataset.lavalFooterLogoBound === "1") return true;
+
+                brandLink.dataset.lavalFooterLogoBound = "1";
+                brandLink.innerHTML = "";
+                brandLink.classList.add("laval-footer-brand");
+
+                const logoImg = document.createElement("img");
+                logoImg.src = logoPath;
+                logoImg.alt = "Laval Servicios";
+                logoImg.className = "laval-footer-logo";
+                brandLink.appendChild(logoImg);
+                return true;
+            }
+
+            function customizeFooter() {
+                const footer = document.querySelector("footer");
+                if (!footer) return false;
+
+                removeFooterSocialIcons(footer);
+                return replaceFooterLogo();
+            }
+
             function replaceHeaderLogo() {
                 const logoPath = "/images/logo/laval-menu-logo.png";
                 const header = document.querySelector("header");
@@ -593,6 +655,7 @@
                 wireContactFormSubmission();
                 removeTrustSection();
                 replaceHeaderLogo();
+                customizeFooter();
 
                 const observer = new MutationObserver(() => {
                     fixRenderedTexts();
@@ -601,6 +664,7 @@
                     wireContactFormSubmission();
                     removeTrustSection();
                     replaceHeaderLogo();
+                    customizeFooter();
                 });
 
                 observer.observe(document.documentElement, { childList: true, subtree: true, characterData: true });
