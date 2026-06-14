@@ -8,7 +8,7 @@
     <link rel="icon" type="image/x-icon" href="/favicon.ico" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>LAVAL Servicios SRL | Distribuidora de Artículos de Limpieza en CABA y AMBA</title>
-    <meta name="description" content="Laval Servicios es una distribuidora de articulos de limpieza profesional e institucional. Entregas en CABA y AMBA. Productos quimicos, papeleras, bolsas de residuos y soluciones para empresas, colegios, clinicas, hoteles y consorcios"/>
+    <meta name="description" content="Laval Servicios es una distribuidora de artículos de limpieza profesional e institucional. Entregas en CABA y AMBA. Productos químicos, papeleras, bolsas de residuos y soluciones para empresas, colegios, clínicas, hoteles y consorcios." />
     <meta name="keywords" content="laval servicios, lavalservicios, servicios para empresas, asesoramiento empresarial" />
     <meta name="robots" content="index, follow, max-image-preview:large" />
     <meta name="googlebot" content="index, follow" />
@@ -22,7 +22,7 @@
     <meta property="og:image" content="https://lavalservicios.com.ar/images/logo/laval-menu-logo.png" />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="LAVAL Servicios SRL | Distribuidora de Artículos de Limpieza en CABA y AMBA" />
-    <meta name="twitter:description" content="Potenciamos tu negocio con soluciones integrales, asesoramiento estrategico y soporte personalizado." />
+    <meta name="twitter:description" content="Distribuidora de artículos de limpieza profesional e institucional. Entregas en CABA y AMBA para empresas, colegios, clínicas, hoteles y consorcios." />
     <meta name="twitter:image" content="https://lavalservicios.com.ar/images/logo/laval-menu-logo.png" />
     <script type="application/ld+json">
         {
@@ -241,6 +241,31 @@
                         if (fixed !== current) el.setAttribute(attr, fixed);
                     });
                 });
+            }
+
+            const SEO_METADATA = {
+                title: "LAVAL Servicios SRL | Distribuidora de Artículos de Limpieza en CABA y AMBA",
+                description: "Laval Servicios es una distribuidora de artículos de limpieza profesional e institucional. Entregas en CABA y AMBA. Productos químicos, papeleras, bolsas de residuos y soluciones para empresas, colegios, clínicas, hoteles y consorcios."
+            };
+
+            function setMetaContent(selector, value) {
+                const node = document.querySelector(selector);
+                if (node && node.getAttribute("content") !== value) {
+                    node.setAttribute("content", value);
+                }
+            }
+
+            function enforceSeoMetadata() {
+                const fixedTitle = fixMojibake(document.title);
+                if (fixedTitle !== SEO_METADATA.title) {
+                    document.title = SEO_METADATA.title;
+                }
+
+                setMetaContent('meta[name="description"]', SEO_METADATA.description);
+                setMetaContent('meta[property="og:title"]', SEO_METADATA.title);
+                setMetaContent('meta[property="og:description"]', SEO_METADATA.description);
+                setMetaContent('meta[name="twitter:title"]', SEO_METADATA.title);
+                setMetaContent('meta[name="twitter:description"]', SEO_METADATA.description);
             }
 
             function normalizeText(value) {
@@ -563,6 +588,7 @@
 
             function boot() {
                 fixRenderedTexts();
+                enforceSeoMetadata();
                 fixWhatsAppLinks();
                 wireContactFormSubmission();
                 removeTrustSection();
@@ -570,13 +596,14 @@
 
                 const observer = new MutationObserver(() => {
                     fixRenderedTexts();
+                    enforceSeoMetadata();
                     fixWhatsAppLinks();
                     wireContactFormSubmission();
                     removeTrustSection();
                     replaceHeaderLogo();
                 });
 
-                observer.observe(document.body, { childList: true, subtree: true });
+                observer.observe(document.documentElement, { childList: true, subtree: true, characterData: true });
             }
 
             document.addEventListener("DOMContentLoaded", boot);
