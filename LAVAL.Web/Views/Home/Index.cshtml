@@ -562,6 +562,15 @@
                 }
             }
 
+            function removeFooterLegalLinks(footer) {
+                footer.querySelectorAll("a").forEach((link) => {
+                    const text = normalizeText(link.textContent);
+                    if (text.includes("politica de privacidad") || text.includes("terminos de servicio")) {
+                        link.remove();
+                    }
+                });
+            }
+
             function removeFooterSocialIcons(footer) {
                 footer.querySelectorAll("div.flex.gap-4").forEach((container) => {
                     const links = Array.from(container.querySelectorAll("a"));
@@ -604,6 +613,7 @@
                 if (!footer) return false;
 
                 removeFooterSocialIcons(footer);
+                removeFooterLegalLinks(footer);
                 return replaceFooterLogo();
             }
 
