@@ -582,11 +582,8 @@
                 const footer = document.querySelector("footer");
                 if (!footer) return false;
 
-                const brandLink = Array.from(footer.querySelectorAll("a")).find((link) => {
-                    const text = normalizeText(link.textContent);
-                    return text.includes("laval") && text.includes("servicios");
-                });
-
+                const firstColumn = footer.querySelector(".grid > div");
+                const brandLink = firstColumn?.querySelector('a[href="/"]');
                 if (!brandLink) return false;
                 if (brandLink.dataset.lavalFooterLogoBound === "1") return true;
 
