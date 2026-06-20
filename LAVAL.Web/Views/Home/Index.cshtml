@@ -337,6 +337,7 @@ gtag('config', 'AW-18179764908');
                 title: "LAVAL Servicios SRL | Distribuidora de Artículos de Limpieza en CABA y AMBA",
                 description: "Laval Servicios es una distribuidora de artículos de limpieza profesional e institucional. Entregas en CABA y AMBA. Productos químicos, papeleras, bolsas de residuos y soluciones para empresas, colegios, clínicas, hoteles y consorcios."
             };
+            const WHATSAPP_PHONE_E164 = "5491123440895";
 
             function setMetaContent(selector, value) {
                 const node = document.querySelector(selector);
@@ -427,6 +428,12 @@ gtag('config', 'AW-18179764908');
 
                     const host = (url.hostname || "").toLowerCase();
                     if (!host.includes("wa.me") && !host.includes("whatsapp.com")) return;
+
+                    if (host.includes("wa.me")) {
+                        url.pathname = `/${WHATSAPP_PHONE_E164}`;
+                    } else {
+                        url.searchParams.set("phone", WHATSAPP_PHONE_E164);
+                    }
 
                     const textParam = url.searchParams.get("text");
                     if (!textParam) return;
